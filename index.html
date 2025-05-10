@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whisper Journal</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #f3f0e8;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #444;
+    }
+    textarea {
+      width: 90%;
+      height: 100px;
+      margin-top: 10px;
+      font-size: 16px;
+      padding: 10px;
+    }
+    #entries {
+      width: 90%;
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .entry {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background: #5eaaa8;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Whisper Journal</h1>
+  <button id="start-record">Start Recording</button>
+  <button id="stop-record" disabled>Stop Recording</button>
+  <textarea id="transcript" placeholder="Your transcribed voice will appear here..."></textarea>
+  <button id="save-entry">Save Entry</button>  <div id="entries">
+    <h2>Journal Entries</h2>
+  </div>  <script>
+    const startBtn = document.getElementById('start-record');
+    const stopBtn = document.getElementById('stop-record');
+    const transcriptArea = document.getElementById('transcript');
+    const saveBtn = document.getElementById('save-entry');
+    const entriesDiv = document.getElementById('entries');
+
+    let recognition;
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        transcriptArea.value = transcript;
+      };
+
+      startBtn.onclick = () => {
+        recognition.start();
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+
+      stopBtn.onclick = () => {
+        recognition.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+    } else {
+      alert('Speech Recognition not supported in your browser');
+    }
+
+    saveBtn.onclick = () => {
+      const text = transcriptArea.value.trim();
+      if (text === '') return;
+
+      const timestamp = new Date().toLocaleString();
+      const entryHTML = `
+        <div class="entry">
+          <strong>${timestamp}</strong>
+          <p>${text}</p>
+        </div>
+      `;
+      entriesDiv.innerHTML += entryHTML;
+      localStorage.setItem(timestamp, text);
+      transcriptArea.value = '';
+    };
+
+    window.onload = () => {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const text = localStorage.getItem(key);
+        const entryHTML = `
+          <div class="entry">
+            <strong>${key}</strong>
+            <p>${text}</p>
+          </div>
+        `;
+        entriesDiv.innerHTML += entryHTML;
+      }
+    };
+  </script></body>
+</html>
